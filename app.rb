@@ -5,6 +5,22 @@ require 'moneta'
 require 'time'
 require 'rufus-scheduler'
 
+CFoundry::AuthToken.class_eval do
+  def token_data
+    return @token_data if @token_data
+    return {} unless @auth_header
+
+    token = @auth_header.split(" ", 2).last
+    payload_segment = token.split(".", 3)[1]
+    data_json = Base64.decode64(payload_segment)
+    return {} unless data_json
+
+    @token_data = MultiJson.load data_json, :symbolize_keys => true
+  rescue MultiJson::DecodeError
+    {}
+  end
+end
+
 @cf_api = ENV['CF_API']
 @cf_user = ENV['CF_USER']
 @cf_password = ENV['CF_PASSWORD']
